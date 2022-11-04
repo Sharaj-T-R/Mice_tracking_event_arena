@@ -3,8 +3,10 @@ from typing import Any, Union
 import cv2
 import argparse
 import numpy as np
+import pandas as pd
 from datetime import datetime
 from guizero import App, Text, PushButton, TextBox
+import xlwt
 
 
 
@@ -17,11 +19,11 @@ def crop():
     cv2.namedWindow('crop selection', cv2.WINDOW_NORMAL)
     switch = '1:ok'
     cv2.createTrackbar(switch, 'crop selection', 0, 1, nothing)
-    cap = cv2.VideoCapture("C:/Users/sharaj/Documents/phd project/pi cam projects/Video 3099.mp4")
+    cap = cv2.VideoCapture("D:/pilot exp iisc/WM/Young animals/Day 1/Trial 1/WIN_20220627_12_05_33_Pro.mp4")
     frame_to_crop = cap.read()[1]
     cv2.imshow('crop selection', frame_to_crop)
-    fourcc = cv2.VideoWriter_fourcc(* 'mp4v')
-    out_crop = cv2.VideoWriter('cropped.mp4', fourcc, 30.0, (640, 480))
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out_crop = cv2.VideoWriter("C:/Users/sharaj/Documents/phd project/python projects/pythonProject/venv/wm_cropped.mp4", fourcc, 30, (300, 300))
     r = cv2.selectROI('crop selection', frame_to_crop)
     while True:
         s = cv2.getTrackbarPos(switch, 'crop selection')
@@ -50,7 +52,7 @@ def crop():
 
 
 def bgrnd():
-    cap = cv2.VideoCapture("C:/Users/sharaj/Documents/phd project/pi cam projects/cropped.mp4")
+    cap = cv2.VideoCapture("C:/Users/sharaj/Documents/phd project/simvastatin project/object recognition training/crop/cage 1 mice 2.mp4")
     i = input_noise_factor.value
     k = int(i)
     j = 0
@@ -82,9 +84,9 @@ def bgrnd():
                     imge = cv2.rectangle(img, pt1=(int(w / 2), int(h / 2)), pt2=(w, h), color=(0, 255, 0), thickness=2)
                     cv2.imshow("Press y when mice is not in A", imge)
                     cv2.imshow('generating background', background)
-                    key1 = cv2.waitKey(100) & 0xff
+                    key1 = cv2.waitKey(10) & 0xff
                     if key1 == ord('y'):
-                        cv2.destroyWindow("press y when mice is not in A")
+                        # cv2.destroyWindow("press y when mice is not in A")
                         cv2.destroyWindow("generating background")
                         background[int(0):int(h/2), 0:int(w/2)] = clone1[int(0):int(h/2), 0:int(w/2)]
                         cv2.namedWindow('generated background', cv2.WINDOW_NORMAL)
@@ -104,7 +106,7 @@ def bgrnd():
                     imge = cv2.rectangle(img, pt1=(int(w / 2), int(h / 2)), pt2=(w, h), color=(0, 255, 0), thickness=2)
                     cv2.imshow("Press y when mice is not in B", imge)
                     cv2.imshow('generating background', background)
-                    key1 = cv2.waitKey(100) & 0xff
+                    key1 = cv2.waitKey(10) & 0xff
                     if key1 == ord('y'):
                         background[int(0):int(h / 2), int(w/2):int(w)] = clone1[int(0):int(h / 2), int(w/2):int(w)]
                         cv2.namedWindow('generated background', cv2.WINDOW_NORMAL)
@@ -124,7 +126,7 @@ def bgrnd():
                     imge = cv2.rectangle(img, pt1=(int(w / 2), int(h / 2)), pt2=(w, h), color=(0, 255, 0), thickness=2)
                     cv2.imshow("Press y when mice is not in C", imge)
                     cv2.imshow('generating background', background)
-                    key1 = cv2.waitKey(100) & 0xff
+                    key1 = cv2.waitKey(10) & 0xff
                     if key1 == ord('y'):
                         background[int(h/2):int(h), int(0):int(w/2)] = clone1[int(h/2):int(h), int(0):int(w/2)]
                         cv2.namedWindow('generated background', cv2.WINDOW_NORMAL)
@@ -144,7 +146,7 @@ def bgrnd():
                     imge = cv2.rectangle(img, pt1=(int(w / 2), int(h / 2)), pt2=(w, h), color=(0, 255, 0), thickness=2)
                     cv2.imshow("Press y when mice is not in D", imge)
                     cv2.imshow('generating background', background)
-                    key1 = cv2.waitKey(100) & 0xff
+                    key1 = cv2.waitKey(10) & 0xff
                     if key1 == ord('y'):
                         background[int(h / 2):int(h), int(w/2):int(w)] = clone1[int(h / 2):int(h), int(w/2):int(w)]
                         cv2.namedWindow('generated background', cv2.WINDOW_NORMAL)
@@ -164,38 +166,107 @@ def bgrnd():
 
 
 def trackmice():
-    cap = cv2.VideoCapture('cropped.mp4')
+    cap = cv2.VideoCapture("C:/Users/sharaj/Documents/phd project/simvastatin project/object recognition training/crop/cage 1 mice 2.mp4")
     temp = cv2.imread("background.jpg")
+    temp = cv2.resize(temp,(150,150))
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc1 = cv2.VideoWriter_fourcc(*'mp4v')
+    # out_bgroung_sub = cv2.VideoWriter("C:/Users/sharaj/Documents/phd project/simvastatin project/object recognition training/background subtracted/cage 8 mice 3 bg_sub.mp4", fourcc, 30, (150, 150))
+    out_mice_tracking = cv2.VideoWriter("C:/Users/sharaj/Documents/phd project/simvastatin project/object recognition training/mice tracking/cage 1 mice 2.mp4", fourcc1, 30, (150, 150))
     # (h, w) = temp.shape[:2]
     # img = np.array(50, (int(h),int(w)), dtype = int)
-    template = temp
-    print("background checkpoint")
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = 1000
-    params.filterByCircularity = True
-    params.minCircularity = 0.9
-    params.filterByConvexity = True
-    params.minConvexity = 0.87
+    # template = temp
+    # print("background checkpoint")
+    # params = cv2.SimpleBlobDetector_Params()
+    # params.filterByArea = True
+    # params.minArea = 1000
+    # params.filterByCircularity = True
+    # params.minCircularity = 0.9
+    # params.filterByConvexity = True
+    # params.minConvexity = 0.87
+    coordinate_array = [(0,0)]
     while cap.isOpened():
         ret, frame1 = cap.read()
         if ret:
-            trackframe = cv2.subtract(template,frame1)
-            img = trackframe
+
+            framea = cv2.resize(frame1,(150,150))
+            # frameb = cv2.resize(template,(300,300))
+            trackframe = cv2.subtract(framea,temp)
+            # cv2.imshow('check', trackframe)
+            # trackgrey = cv2.cvtColor(trackframe, cv2.COLOR_BGR2GRAY)
+           #  ret, thresh = cv2.threshold(trackgrey,20, 255, cv2.THRESH_BINARY)
+            # im2,contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # cnt = contours
+            # M = cv2.moments(cnt)
+           # print(M)
+            # cv2.moments()
+            img = cv2.cvtColor(trackframe,cv2.COLOR_BGR2GRAY)
+            # cv2.imwrite("background_sub.jpg",img)
+            # img = trackframe
+            (h, w) = trackframe.shape[:2]
+            grey_val_arr_mice = []
+            x_coor = [0]
+            y_coor = [0]
+            # coor_array = [(0,0)]
             ret, thresh1 = cv2.threshold(img, 20, 255, cv2.THRESH_BINARY)
-            detector = cv2.SimpleBlobDetector_create(params)
-            print("dectector checkpoint")
-            keypoints = detector.detect(thresh1)
+            i = 0
+            j = 0
+            for j in range (0,h):
+                for i in range (0, w):
+                    grey_val = thresh1[i,j]
+                    # print(grey_val)
+                    if grey_val == 255:
+                        grey_val_arr_mice.append(grey_val)
+                        x_coor.append(j)
+                        y_coor.append(i)
+                        # coor_array.append((j,i))
+            Length_mouse = len(grey_val_arr_mice)
+            #print(Length_mouse)
+            #print(grey_val_arr_mice)
+            if Length_mouse > 10:
+                mouse = Length_mouse/2
+            else:
+                mouse = 0
+            x = int(mouse)
+            # coor_array.sort()
+            #print(x)
+            #print(x_coor)
+            x_coor.sort()
+            y_coor.sort()
+            mouse_x_coor = x_coor[x]
+            mouse_y_coor = y_coor[x]
+            # mouse_coor = coor_array[x]
+            # print(mouse_x_coor, mouse_y_coor)
+
+            a = int(mouse_x_coor)
+            b = int (mouse_y_coor)
+            coordinate_array.append((a,b))
+            #print(a,b)
+            xa = a-4
+            ya = b+4
+            xb = a+4
+            yb = b-4
+            tracker = cv2.rectangle(framea, pt1 = (xa,ya), pt2= (xb,yb) ,color=(0, 255, 0), thickness=2)
+            # detector = cv2.SimpleBlobDetector_create(params)
+            # print("dectector checkpoint")
+            # keypoints = detector.detect(thresh1)
             # print("keypoints obtained")
-            trackframe_with_keypoints = cv2.drawKeypoints(thresh1, keypoints, np.array([]), (0, 0, 255),
-            cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-            cv2.imshow("orignial",frame1)
-            cv2.imshow("mice tracking",trackframe_with_keypoints)
-            cv2.waitKey(10)
+            # trackframe_with_keypoints = cv2.drawKeypoints(thresh1, keypoints, np.array([]), (0, 0, 255),
+            # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            # cv2.imshow("orignial",frame1)
+            # res = cv2.resize(tracker,(150,150))
+            # cv2.imshow("background_subtraction",img)
+            # cv2.imshow("bg", thresh1)
+            cv2.imshow("mice_tracking",tracker)
+            # out_bgroung_sub.write(img)
+            out_mice_tracking.write(tracker)
+            cv2.waitKey(1)
         else:
             break
     cap.release()
     cv2.destroyAllWindows()
+    df = pd.DataFrame(coordinate_array)
+    df.to_excel(excel_writer= "coordinates.xls")
     return
 
 # def mice_tracking():
